@@ -15,6 +15,8 @@ retain counts.
 This proposal suggests to add another method to `Unmanaged` that will allow
 making an assertion about the guaranteed lifetime of the instance returned.
 
+This assertion will help the compiler remove ARC operations.
+
 ``` swift
 public struct Unmanaged<Instance : AnyObject> {
 
@@ -41,7 +43,7 @@ public struct Unmanaged<Instance : AnyObject> {
   }
 ```
 
-Prototype:  [link to a prototype implementation](https://github.com/aschwaighofer/swift/tree/unsafe_guaranteed_prototype)
+Prototype: [link to a prototype implementation](https://github.com/aschwaighofer/swift/tree/unsafe_guaranteed_prototype)
 
 ## Motivation
 
@@ -71,11 +73,9 @@ public class Owner {
 ```
 
 In this context the lifetime of `Owner` always exceeds `o: Ownee`. However,
-there is currently no way to tell the compiler about such an assertion. We can
-get at the contained instance by means of ``takeUnretainedValue()`` which will
-return a balanced retained value: the value is returned at `+1` for release by
-the caller. We can pass reference counted values in an `Unmanged` container
-without incurring reference count changes.
+there is currently no way to tell the compiler about such an assertion.  We can
+pass reference counted values in an `Unmanged` container without incurring
+reference count changes.
 
 ```swift
 public class Owner {
@@ -91,8 +91,10 @@ public class Owner {
 }
 ```
 
-However, when it comes to accessing the contained instance we incur reference
-counting.
+We can get at the contained instance by means of ``takeUnretainedValue()`` which
+will return a balanced retained value: the value is returned at `+1` for release
+by the caller. However, when it comes to accessing the contained instance we
+incur reference counting.
 
 ```swift
   func doSomething(u: Unmanaged<Owned>) {
@@ -112,8 +114,8 @@ contained instance's lifetime is guaranteed by another reference to it.
   }
 ```
 
-The compiler can easily remove the reference counts marked by this function
-call with local reasoning.
+The compiler can easily remove the reference counts marked by this method call
+with local reasoning.
 
 ## Impact on existing code
 
