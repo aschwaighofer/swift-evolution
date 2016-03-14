@@ -1,6 +1,6 @@
 # Add an API to `Unmanaged` to get the instance it holds `@guaranteed`
 
-* Proposal: [SE-XXXX]
+* Proposal: [SE-0000 Add an API to Unmanaged to get the instance it holds guaranteed](https://github.com/aschwaighofer/swift-evolution/blob/unmanaged_unsafe_guaranteed_proposal/proposals/0000-unsafe-guaranteed.md)
 * Author(s): [Arnold Schwaighofer] (https://github.com/aschwaighofer)
 * Status: **Awaiting Review**
 * Review manager: TBD
