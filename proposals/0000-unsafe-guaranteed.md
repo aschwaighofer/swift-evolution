@@ -31,11 +31,11 @@ public struct Unmanaged<Instance : AnyObject> {
   // the lifetime this assertion must hold true for by the lifetime of the
   // L-Value.
   //   var owningReference = Instance()
-  //   var lValue : Instance?
+  //   var lValue : Instance
   //   withFixedLifetime(owningReference) {
   //     lValue = Unmanaged.passUnretained(owningReference).takeGuaranteedValue()
   //   }
-  //   lValue!.doSomething() // Bug: owningReference lifetime has ended earlier.
+  //   lValue.doSomething() // Bug: owningReference lifetime has ended earlier.
 
   public func takeGuaranteedValue() -> Instance {
     let result = _value
