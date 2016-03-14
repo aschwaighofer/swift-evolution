@@ -103,7 +103,7 @@ incur reference counting.
   }
 ```
 
-With the proposed API call the user could make the assertion that the `u`'s
+With the proposed API call the user could make the assertion that `u`'s
 contained instance's lifetime is guaranteed by another reference to it.
 
 ```swift
