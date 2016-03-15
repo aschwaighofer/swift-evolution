@@ -45,6 +45,8 @@ public struct Unmanaged<Instance : AnyObject> {
   //       point($0)
   //   }
   //
+  // Or if:
+  //
   // * There is a class, or struct instance ('owner') whose lifetime is fixed at
   //   the point and which has a stored property that references 'the instance'
   //   for the duration of the fixed lifetime of the 'owner'.
@@ -67,7 +69,8 @@ public struct Unmanaged<Instance : AnyObject> {
   //    }
   //  }
   //
-  //  * The last rule applies transitively through a chain of references.
+  // The last rule applies transitively through a chains of stored references
+  // and nested structs.
   //
   // Examples:
   //
