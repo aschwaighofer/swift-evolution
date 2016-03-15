@@ -21,27 +21,91 @@ This assertion will help the compiler remove ARC operations.
 public struct Unmanaged<Instance : AnyObject> {
 
   // Get the value of the unmanaged referenced as a managed reference without
-  // consuming an unbalanced retain of it. Asserts that some other owner
-  // guarantees the lifetime of the value for the lifetime of the return managed
-  // reference. You are responsible for making sure that this assertion holds
-  // true.
+  // consuming an unbalanced retain of it and pass it to the closure. Asserts
+  // that there is some other reference ('the owning reference') to the
+  // unmanaged reference that guarantees the lifetime of the unmanaged reference
+  // for the duration of the 'withUnsafeGuaranteedValue' call.
   //
-  // NOTE:
-  // Be aware that storing the returned managed reference in an L-Value extends
-  // the lifetime this assertion must hold true for by the lifetime of the
-  // L-Value.
+  // NOTE: You are responsible for ensuring this by making the owning reference's
+  // lifetime fixed for the duration of the 'withUnsafeGuaranteedValue'
+  // call.
+  //
+  // Violation of this will incur undefined behavior.
+  //
+  // A lifetime of a reference 'the instance' is fixed over a point in the
+  // programm if:
+  //
+  // * There is another reference to the same instance 'the instance' whose
+  //  lifetime is fixed over the point in the program by means of
+  //  'withExtendedLifetime' closing over this point.
+  //
   //   var owningReference = Instance()
-  //   var lValue : Instance
-  //   withFixedLifetime(owningReference) {
-  //     lValue = Unmanaged.passUnretained(owningReference).takeGuaranteedValue()
+  //   ...
+  //   withExtendedLifetime(owningReference) {
+  //       point($0)
   //   }
-  //   lValue.doSomething() // Bug: owningReference lifetime has ended earlier.
-
-  public func takeGuaranteedValue() -> Instance {
-    let result = _value
-    return Builtin.unsafeGuaranteed(result)
+  //
+  // * There is a class, or struct instance ('owner') whose lifetime is fixed at
+  //   the point and which has a stored property that references 'the instance'
+  //   for the duration of the fixed lifetime of the 'owner'.
+  //
+  //  class Owned {
+  //  }
+  //  class Owner {
+  //    final var owned : Owned
+  //
+  //    func foo() {
+  //        withExtendedLifetime(self) {
+  //            doSomething(...)
+  //        } // Assuming: No stores to owned occur for the dynamic lifetime of
+  //          //           the withExtendedLifetime invocation.
+  //    }
+  //
+  //    func doSomething() {
+  //       // both 'self' and 'owned''s lifetime is fixed over this point.
+  //       point(self, owned)
+  //    }
+  //  }
+  //
+  //  * The last rule applies transitively through a chain of references.
+  //
+  // Examples:
+  //
+  //   var owningReference = Instance()
+  //   ...
+  //   withExtendedLifetime(owningReference) {
+  //     let u = Unmanaged.passUnretained(owningReference)
+  //     for i in 0 ..< 100 {
+  //       u.withUnsafeGuaranteedValue {
+  //         $0.doSomething()
+  //       }
+  //     }
+  //   }
+  //
+  //  class Owner {
+  //    final var owned : Owned
+  //
+  //    func foo() {
+  //        withExtendedLifetime(self) {
+  //            doSomething(Unmanaged.passUnretained(owned))
+  //        }
+  //    }
+  //
+  //    func doSomething(u : Unmanged<Owned>) {
+  //      u.withUnsafeGuaranteedValue {
+  //        $0.doSomething()
+  //      }
+  //    }
+  //  }
+  public func withUnsafeGuaranteedValue<Result>(
+    @noescape closure: (Instance) throws -> Result
+  ) rethrows {
+    let instance = _value
+    let (guaranteedInstance, token) = Builtin.unsafeGuaranteed(instance)
+    try closure(guaranteedInstance)
+    Builtin.unsafeGuaranteedEnd(token)
   }
-```
+ ```
 
 Prototype: [link to a prototype implementation](https://github.com/aschwaighofer/swift/tree/unsafe_guaranteed_prototype)
 
@@ -63,7 +127,9 @@ public class Owner {
   init() { ref = Owned() }
 
   public func doWork() {
-    doSomething(ref)
+    withExtendedLifetime(self) {
+      doSomething(ref)
+    }
   }
 
   func doSomething(o: Owned) {
@@ -110,7 +176,9 @@ contained instance's lifetime is guaranteed by another reference to it.
   func doSomething(u: Unmanaged<Owned>) {
     // Incurs refcount increment before the call and decrement after for self
     // that can be removed by the compiler based on the assertion made.
-    u.takeGuaranteedValue().doSomeWork()
+    u.withUnsafeGuaranteedValue {
+      $0.doSomeWork()
+    }
   }
 ```
 
