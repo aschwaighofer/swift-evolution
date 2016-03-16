@@ -15,7 +15,8 @@ retain counts.
 This proposal suggests to add another method `withUnsafeGuaranteedValue` to
 `Unmanaged` that accepts a closure. Calling this method is akin to making an
 assertion about the guaranteed lifetime of the instance for the
-delinated scope of the method invocation.
+delinated scope of the method invocation. The closure is passed the unmanaged
+reference as a managed reference.
 
 ```swift
   func doSomething(u : Unmanged<Owned>) {
