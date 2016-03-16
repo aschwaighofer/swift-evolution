@@ -19,7 +19,7 @@ delinated scope of the method invocation.
 
 ```swift
   func doSomething(u : Unmanged<Owned>) {
-    // The programmer asserts that there exists another reference to the
+    // The programmer asserts that there exists another managed reference of the
     // unmanaged reference stored in 'u' and that the lifetime of the referenced
     // instance is guaranteed to extend beyond the 'withUnsafeGuaranteedValue'
     // invocation.
