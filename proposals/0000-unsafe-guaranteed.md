@@ -12,8 +12,22 @@ that does not participate in ARC; it allows the user to make manual
 retain/release calls and get at the contained instance at balanced/unbalanced
 retain counts.
 
-This proposal suggests to add another method to `Unmanaged` that will allow
-making an assertion about the guaranteed lifetime of the instance returned.
+This proposal suggests to add another method `withUnsafeGuaranteedValue` to
+`Unmanaged` that accepts a closure. Calling this method is akin to making an
+assertion about the guaranteed lifetime of the instance for the
+delinated scope of the method invocation.
+
+```swift
+  func doSomething(u : Unmanged<Owned>) {
+    // The programmer asserts that there exists another reference to the
+    // unmanaged reference stored in 'u' and that the lifetime of the referenced
+    // instance is guaranteed to extend beyond the 'withUnsafeGuaranteedValue'
+    // invocation.
+    u.withUnsafeGuaranteedValue {
+      $0.doSomething()
+    }
+  }
+```
 
 This assertion will help the compiler remove ARC operations.
 
@@ -27,16 +41,15 @@ public struct Unmanaged<Instance : AnyObject> {
   // for the duration of the 'withUnsafeGuaranteedValue' call.
   //
   // NOTE: You are responsible for ensuring this by making the owning reference's
-  // lifetime fixed for the duration of the 'withUnsafeGuaranteedValue'
-  // call.
+  // lifetime fixed for the duration of the 'withUnsafeGuaranteedValue' call.
   //
   // Violation of this will incur undefined behavior.
   //
   // A lifetime of a reference 'the instance' is fixed over a point in the
   // programm if:
   //
-  // * There is another reference to the same instance 'the instance' whose
-  //  lifetime is fixed over the point in the program by means of
+  // * There is another managed reference to the same instance 'the instance'
+  //   whose life time is fixed over the point in the program by means of
   //  'withExtendedLifetime' closing over this point.
   //
   //   var owningReference = Instance()
@@ -53,6 +66,7 @@ public struct Unmanaged<Instance : AnyObject> {
   //
   //  class Owned {
   //  }
+  //
   //  class Owner {
   //    final var owned : Owned
   //
