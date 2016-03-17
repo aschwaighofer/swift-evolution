@@ -38,8 +38,8 @@ public struct Unmanaged<Instance : AnyObject> {
   // Get the value of the unmanaged referenced as a managed reference without
   // consuming an unbalanced retain of it and pass it to the closure. Asserts
   // that there is some other reference ('the owning reference') to the
-  // unmanaged reference that guarantees the lifetime of the unmanaged reference
-  // for the duration of the 'withUnsafeGuaranteedValue' call.
+  // instance referenced by the unmanaged reference that guarantees the lifetime
+  // of the instance for the duration of the 'withUnsafeGuaranteedValue' call.
   //
   // NOTE: You are responsible for ensuring this by making the owning reference's
   // lifetime fixed for the duration of the 'withUnsafeGuaranteedValue' call.
@@ -49,9 +49,19 @@ public struct Unmanaged<Instance : AnyObject> {
   // A lifetime of a reference 'the instance' is fixed over a point in the
   // programm if:
   //
-  // * There is another managed reference to the same instance 'the instance'
-  //   whose life time is fixed over the point in the program by means of
-  //  'withExtendedLifetime' closing over this point.
+  // * There exits a global variable that references 'the instance'.
+  //
+  //   import Foundation
+  //   var globalReference = Instance()
+  //   func aFunction() {
+  //      point()
+  //   }
+  //
+  // Or if:
+  //
+  // * There is another managed reference to 'the instance' whose life time is
+  //   fixed over the point in the program by means of 'withExtendedLifetime'
+  //   dynamically closing over this point.
   //
   //   var owningReference = Instance()
   //   ...
